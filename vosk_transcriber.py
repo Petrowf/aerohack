@@ -1,8 +1,9 @@
 import json
 import logging
+
 import vosk
 from pydub import AudioSegment
-from typing import List
+
 from config import VoskConfig
 
 logger = logging.getLogger(__name__)
