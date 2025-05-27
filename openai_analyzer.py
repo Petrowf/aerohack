@@ -16,12 +16,15 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MeetingAnalysis:
     """Структура для анализа технического совещания"""
-    transcript: str
-    summary: str
-    tasks: List[Dict[str, Any]]
-    hypotheses: List[Dict[str, str]]
-    decisions: List[str]
-    participants: List[str]
+    transcript: str #Текст совещания
+    summary: str #Сводка
+    tasks: List[Dict[str, Any]] #Поставленные задачи
+    hypotheses: List[Dict[str, str]] #Поставленные гипотезы
+    decisions: List[str] #Принятые решения
+    participants: List[str] #Участники совещания
+    president: str #Председатель
+    secretary: str #Секретарь
+    absent: List[str] #Отсутствовавшии
 
 class OpenAIAnalyzer:
     """Класс для анализа транскрипции с помощью OpenAI"""
@@ -115,20 +118,28 @@ class OpenAIAnalyzer:
                             "description": "Список участников совещания",
                             "items": {
                                 "type": "string",
-                                "description": "Имя или роль участника"
+                                "description": "Фамилия и инициалы участника"
                             }
                         },
-                        "": {
+                        "president": {
+                            "type": "string",
+                            "description": "Фамилия и инициалы председателя совещания"
+                        },
+                        "secretary": {
+                            "type": "string",
+                            "description": "Фамилия и инициалы секретаря совещания"
+                        },
+                        "absent": {
                             "type": "array",
-                            "description": "Затронутые технические области",
+                            "description": "Список отсутствовавших на совещании",
                             "items": {
                                 "type": "string",
-                                "enum": ["программирование", "радиоэлектроника", "конструирование", "летные испытания"],
-                                "description": "Техническая область"
+                                "description": "Фамилия и инициалы отсутствовавшего"
                             }
                         }
+
                     },
-                    "required": ["summary", "tasks", "hypotheses", "decisions", "participants", ""]
+                    "required": ["summary", "tasks", "hypotheses", "decisions", "participants", "president", "secretary", "absent"]
                 }
             }
         }
@@ -237,7 +248,10 @@ class OpenAIAnalyzer:
                 tasks=analysis_data.get("tasks", []),
                 hypotheses=analysis_data.get("hypotheses", []),
                 decisions=analysis_data.get("decisions", []),
-                participants=analysis_data.get("participants", [])
+                participants=analysis_data.get("participants", []),
+                president=analysis_data.get("president", ""),
+                secretary=analysis_data.get("secretary", ""),
+                absent=analysis_data.get("absent", [])
             )
 
         except Exception as e:
@@ -263,7 +277,10 @@ class OpenAIAnalyzer:
             tasks=[],
             hypotheses=[],
             decisions=[],
-            participants=[]
+            participants=[],
+            president="",
+            secretary="",
+            absent=[]
         )
 
     def validate_analysis(self, analysis: MeetingAnalysis) -> bool:

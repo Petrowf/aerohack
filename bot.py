@@ -28,8 +28,12 @@ dp = Dispatcher()
 @dp.message(F.audio | F.voice)
 async def cmd_start(message: types.Message):
     await message.answer("Получено голосовое сообщение")
-    voice_file = await bot.get_file(message.voice.file_id)
-    await bot.download_file(voice_file.file_path, "audio.mp3")
+    if message.voice:
+        voice_file = await bot.get_file(message.voice.file_id)
+        await bot.download_file(voice_file.file_path, "audio.mp3")
+    elif message.audio:
+        audio_file = await bot.get_file(message.audio.file_id)
+        await bot.download_file(audio_file.file_path, "audio.mp3")
     transcribed_audio = vosk_tr.transcribe_from_file("audio.mp3")
     await message.answer(transcribed_audio)
     analyzed_text = openai_an.analyze_transcript(transcribed_audio)
