@@ -32,6 +32,7 @@ class TechnicalMeetingSecretary:
     def __init__(self,
                  vosk_model_path: str,
                  openai_api_key: str,
+                 openai_api_base: str,
                  jira_url: str = None,
                  jira_email: str = None,
                  jira_api_token: str = None):
@@ -41,6 +42,7 @@ class TechnicalMeetingSecretary:
         Args:
             vosk_model_path: Путь к модели Vosk
             openai_api_key: API ключ OpenAI
+            openai_api_base: Ссылка на API базу OpenAI
             jira_url: URL Jira instance
             jira_email: Email для Jira
             jira_api_token: API токен Jira
@@ -51,7 +53,7 @@ class TechnicalMeetingSecretary:
         self.vosk_rec.SetWords(True)
 
         # Настройка OpenAI
-        self.openai_client = OpenAI(api_key=openai_api_key)
+        self.openai_client = OpenAI(api_key=openai_api_key, base_url=openai_api_base)
 
         # Настройка Jira (опционально)
         self.jira_url = jira_url
