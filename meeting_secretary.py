@@ -121,8 +121,7 @@ class TechnicalMeetingSecretary:
                     "tasks": analysis.tasks,
                     "hypotheses": analysis.hypotheses,
                     "decisions": analysis.decisions,
-                    "participants": analysis.participants,
-                    "technical_areas": analysis.technical_areas
+                    "participants": analysis.participants
                 },
                 "weeek_integration": weeek_result,
                 "full_transcript": transcript,
@@ -130,8 +129,7 @@ class TechnicalMeetingSecretary:
                     "tasks_count": len(analysis.tasks),
                     "hypotheses_count": len(analysis.hypotheses),
                     "decisions_count": len(analysis.decisions),
-                    "participants_count": len(analysis.participants),
-                    "technical_areas_count": len(analysis.technical_areas)
+                    "participants_count": len(analysis.participants)
                 }
             }
 

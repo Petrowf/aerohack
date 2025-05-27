@@ -310,9 +310,6 @@ class WeeekIntegration:
 ## 👥 Участники
 {', '.join(analysis.participants) if analysis.participants else 'Не определены'}
 
-## 🔧 Технические области
-{', '.join(analysis.technical_areas) if analysis.technical_areas else 'Не определены'}
-
 ---
 🤖 Автоматически создано на основе анализа транскрипции
 📅 Дата создания: {datetime.now().strftime('%d.%m.%Y в %H:%M')}"""

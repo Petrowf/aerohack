@@ -22,7 +22,6 @@ class MeetingAnalysis:
     hypotheses: List[Dict[str, str]]
     decisions: List[str]
     participants: List[str]
-    technical_areas: List[str]
 
 class OpenAIAnalyzer:
     """Класс для анализа транскрипции с помощью OpenAI"""
@@ -119,7 +118,7 @@ class OpenAIAnalyzer:
                                 "description": "Имя или роль участника"
                             }
                         },
-                        "technical_areas": {
+                        "": {
                             "type": "array",
                             "description": "Затронутые технические области",
                             "items": {
@@ -129,7 +128,7 @@ class OpenAIAnalyzer:
                             }
                         }
                     },
-                    "required": ["summary", "tasks", "hypotheses", "decisions", "participants", "technical_areas"]
+                    "required": ["summary", "tasks", "hypotheses", "decisions", "participants", ""]
                 }
             }
         }
@@ -238,8 +237,7 @@ class OpenAIAnalyzer:
                 tasks=analysis_data.get("tasks", []),
                 hypotheses=analysis_data.get("hypotheses", []),
                 decisions=analysis_data.get("decisions", []),
-                participants=analysis_data.get("participants", []),
-                technical_areas=analysis_data.get("technical_areas", [])
+                participants=analysis_data.get("participants", [])
             )
 
         except Exception as e:
@@ -265,8 +263,7 @@ class OpenAIAnalyzer:
             tasks=[],
             hypotheses=[],
             decisions=[],
-            participants=[],
-            technical_areas=[]
+            participants=[]
         )
 
     def validate_analysis(self, analysis: MeetingAnalysis) -> bool:
