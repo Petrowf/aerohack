@@ -312,10 +312,6 @@ class WeeekIntegration:
 👥 Участники
 {', '.join(analysis.participants) if analysis.participants else 'Не определены'}
 
-👥 Отсутствовавшие
-{', '.join(analysis.absent) if analysis.absent else 'Не определены'}
-
----
 🤖 Автоматически создано на основе анализа транскрипции
 📅 Дата создания: {datetime.now().strftime('%d.%m.%Y в %H:%M')}"""
 
