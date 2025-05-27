@@ -3,6 +3,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from pathlib import Path
+from create_protocol import replace_placeholders
 
 from config import MeetingSecretaryConfig, VoskConfig, OpenAIConfig, WeeekConfig
 from vosk_transcriber import VoskTranscriber
@@ -79,7 +80,8 @@ class TechnicalMeetingSecretary:
             # 3. Интеграция с Weeek
             self.weeek_integration.create_tasks_from_analysis(analysis)
 
-
+            # 4. Заполнение протокола
+            replace_placeholders("Протокол_совещания.docx", analysis)
             # 4. Формирование результата
             processing_time = (datetime.now() - start_time).total_seconds()
             logger.info(f"=== ОБРАБОТКА ЗАВЕРШЕНА УСПЕШНО ЗА {processing_time:.2f} СЕКУНД ===")

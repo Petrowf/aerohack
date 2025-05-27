@@ -3,6 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram import F
 from aiogram.fsm.context import FSMContext
+from aiogram.types import FSInputFile
 
 import config
 # import vosk_transcriber
@@ -58,6 +59,8 @@ async def cmd_start(message: types.Message):
     try:
         processing_time = secretary.process_meeting_audio("audio.mp3")
         await message.answer(f"Обработка завершена, затраченное время: {processing_time}")
+        protocol = FSInputFile("Протокол_совещания.docx")
+        await message.answer_document(protocol)
     except Exception as e:
         await message.answer(f"Произошла ошибка: {e}")
     # transcribed_audio = openai_tr.transcribe_from_file("audio.mp3")
@@ -80,6 +83,8 @@ async def get_url(message: types.Message):
         try:
             processing_time = secretary.process_meeting_audio("downloaded_audio.mp3")
             await message.answer(f"Обработка завершена, затраченное время: {processing_time} секунд")
+            protocol = FSInputFile("Протокол_совещания.docx")
+            await message.answer_document(protocol)
         except Exception as e:
             await message.answer(f"Произошла ошибка: {e}")
     except:
