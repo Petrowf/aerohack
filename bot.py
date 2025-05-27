@@ -6,17 +6,21 @@ import config
 import vosk_transcriber
 import openai_analyzer
 import weeek_integration
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 conf = config.MeetingSecretaryConfig.from_env()
 vosk_tr = vosk_transcriber.VoskTranscriber(conf.vosk)
-#weeek_int = weeek_integration.WeeekIntegration(conf.weeek)
+weeek_int = weeek_integration.WeeekIntegration(conf.weeek)
 openai_an = openai_analyzer.OpenAIAnalyzer(conf.openai)
 
 print(conf.vosk.model_path)
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 # Объект бота
-bot = Bot(token="7944216029:AAF8k7RBHJydyzeQcLUjobz0_CsZxoHMayo")
+bot = Bot(token=os.getenv("BOT_TOKEN"))
 # Диспетчер
 dp = Dispatcher()
 
@@ -29,7 +33,7 @@ async def cmd_start(message: types.Message):
     transcribed_audio = vosk_tr.transcribe_from_file("audio.mp3")
     await message.answer(transcribed_audio)
     analyzed_text = openai_an.analyze_transcript(transcribed_audio)
-   # weeek_int.create_tasks_from_analysis(analyzed_text, 1)
+    weeek_int.create_tasks_from_analysis(analyzed_text)
     print(analyzed_text)
 
 

@@ -1,4 +1,6 @@
 import logging
+import os
+
 import requests
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
@@ -35,7 +37,7 @@ class WeeekIntegration:
 
     def _check_connection(self):
         """Проверка подключения к API"""
-        url = f"{self.base_url}/user"
+        url = f"{self.base_url}/user/me"
         response = requests.get(url, headers=self.headers)
 
         if response.status_code != 200:
@@ -82,19 +84,6 @@ class WeeekIntegration:
                 logger.error(f"Ответ сервера: {e.response.text}")
             raise
 
-    def get_workspace_info(self) -> Dict[str, Any]:
-        """
-        Получение информации о текущем workspace
-
-        Returns:
-            Dict: Информация о workspace
-        """
-        try:
-            response = self._make_request("GET", "ws")
-            return response.get("workspace", {})
-        except Exception as e:
-            logger.error(f"Ошибка получения информации о workspace: {e}")
-            return {}
 
     def get_workspace_members(self) -> List[Dict[str, Any]]:
         """
@@ -110,19 +99,7 @@ class WeeekIntegration:
             logger.error(f"Ошибка получения участников workspace: {e}")
             return []
 
-    def get_projects(self) -> List[Dict[str, Any]]:
-        """
-        Получение списка проектов
 
-        Returns:
-            List[Dict]: Список проектов
-        """
-        try:
-            response = self._make_request("GET", "tm/projects")
-            return response.get("projects", [])
-        except Exception as e:
-            logger.error(f"Ошибка получения проектов: {e}")
-            return []
 
     def get_project_by_id(self, project_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -141,45 +118,6 @@ class WeeekIntegration:
             logger.error(f"Ошибка получения проекта {project_id}: {e}")
             return None
 
-    def create_project(self, title: str, description: str = "") -> Dict[str, Any]:
-        """
-        Создание нового проекта
-
-        Args:
-            title: Название проекта
-            description: Описание проекта
-
-        Returns:
-            Dict: Данные созданного проекта
-        """
-        project_data = {
-            "title": title,
-            "description": description
-        }
-
-        try:
-            response = self._make_request("POST", "tm/projects", project_data)
-            return response.get("project", {})
-        except Exception as e:
-            logger.error(f"Ошибка создания проекта: {e}")
-            raise
-
-    def get_boards(self, project_id: str) -> List[Dict[str, Any]]:
-        """
-        Получение досок проекта
-
-        Args:
-            project_id: ID проекта
-
-        Returns:
-            List[Dict]: Список досок
-        """
-        try:
-            response = self._make_request("GET", f"tm/projects/{project_id}/boards")
-            return response.get("boards", [])
-        except Exception as e:
-            logger.error(f"Ошибка получения досок проекта {project_id}: {e}")
-            return []
 
     def create_board(self, project_id: str, title: str, description: str = "") -> Dict[str, Any]:
         """
@@ -305,7 +243,8 @@ class WeeekIntegration:
                     description: str,
                     board_id: str,
                     assignees: List[str] = None,
-                    due_date: str = None) -> Dict[str, Any]:
+                    due_date: str = None,
+                    parent_id: int = None) -> Dict[str, Any]:
         """
         Создание задачи в Weeek
 
@@ -322,7 +261,8 @@ class WeeekIntegration:
         task_data = {
             "title": title,
             "description": description,
-            "boardId": board_id
+            "boardId": board_id,
+            "parentId": parent_id
         }
 
         # Добавление исполнителей
@@ -342,65 +282,6 @@ class WeeekIntegration:
             logger.error(f"Ошибка создания задачи '{title}': {e}")
             raise
 
-    def create_meeting_project(self, analysis: MeetingAnalysis) -> Dict[str, Any]:
-        """
-        Создание проекта для технического совещания
-
-        Args:
-            analysis: Анализ совещания
-
-        Returns:
-            Dict: Данные созданного проекта
-        """
-        project_title = f"Техническое совещание - {datetime.now().strftime('%d.%m.%Y %H:%M')}"
-
-        description = f"""📋 Автоматически созданный проект на основе анализа технического совещания
-
-📝 Резюме:
-{analysis.summary}
-
-👥 Участники ({len(analysis.participants)}):
-{', '.join(analysis.participants) if analysis.participants else 'Не определены'}
-
-🔧 Технические области:
-{', '.join(analysis.technical_areas) if analysis.technical_areas else 'Не определены'}
-
-📊 Статистика:
-• Задач выявлено: {len(analysis.tasks)}
-• Решений принято: {len(analysis.decisions)}
-• Гипотез для проверки: {len(analysis.hypotheses)}
-
-🤖 Создано автоматически: {datetime.now().strftime('%d.%m.%Y в %H:%M')}"""
-
-        try:
-            project = self.create_project(project_title, description)
-            logger.info(f"Создан проект: {project.get('title')} (ID: {project.get('id')})")
-            return project
-        except Exception as e:
-            logger.error(f"Ошибка создания проекта совещания: {e}")
-            raise
-
-    def create_meeting_board(self, project_id: str, analysis: MeetingAnalysis) -> Dict[str, Any]:
-        """
-        Создание доски для задач совещания
-
-        Args:
-            project_id: ID проекта
-            analysis: Анализ совещания
-
-        Returns:
-            Dict: Данные созданной доски
-        """
-        board_title = f"Задачи совещания от {datetime.now().strftime('%d.%m.%Y')}"
-        board_description = f"Доска с задачами, выявленными на техническом совещании. Всего задач: {len(analysis.tasks)}"
-
-        try:
-            board = self.create_board(project_id, board_title, board_description)
-            logger.info(f"Создана доска: {board.get('title')} (ID: {board.get('id')})")
-            return board
-        except Exception as e:
-            logger.error(f"Ошибка создания доски: {e}")
-            raise
 
     def create_summary_task(self, analysis: MeetingAnalysis, board_id: str) -> Dict[str, Any]:
         """
@@ -413,7 +294,7 @@ class WeeekIntegration:
         Returns:
             Dict: Данные созданной задачи
         """
-        title = "📋 Сводка технического совещания"
+        title = f"📋 Сводка совещания от {datetime.now().date()}"
 
         description = f"""# Результаты технического совещания
 
@@ -446,7 +327,7 @@ class WeeekIntegration:
             logger.error(f"Ошибка создания сводной задачи: {e}")
             raise
 
-    def create_tasks_from_analysis(self, analysis: MeetingAnalysis, project_id: str = None) -> Dict[str, Any]:
+    def create_tasks_from_analysis(self, analysis: MeetingAnalysis) -> Dict[str, Any]:
         """
         Создание задач в Weeek на основе анализа
 
@@ -459,20 +340,14 @@ class WeeekIntegration:
         """
         logger.info("Создание задач в Weeek...")
 
-        # Создание проекта если не указан
-        created_project = None
-        if not project_id:
-            created_project = self.create_meeting_project(analysis)
-            project_id = created_project.get("id")
+        project_id = self.config.project_id
 
         # Проверка проекта
         project = self.get_project_by_id(project_id)
         if not project:
             raise ValueError(f"Проект {project_id} не найден")
 
-        # Создание доски для задач
-        board = self.create_meeting_board(project_id, analysis)
-        board_id = board.get("id")
+        board_id = os.getenv("WEEEK_BOARD_ID")
 
         created_tasks = []
         failed_tasks = []
@@ -480,8 +355,9 @@ class WeeekIntegration:
         try:
             # Создание сводной задачи
             summary_task = self.create_summary_task(analysis, board_id)
+            main_task_id = summary_task.get("id")
             created_tasks.append({
-                "id": summary_task.get("id"),
+                "id": main_task_id,
                 "title": summary_task.get("title"),
                 "type": "summary"
             })
@@ -512,14 +388,16 @@ class WeeekIntegration:
 🤖 Автоматически извлечено из транскрипции совещания""",
                         board_id=board_id,
                         assignees=assignees if assignees else None,
-                        due_date=task_data.get('срок')
+                        due_date=task_data.get('срок'),
+                        parent_id=main_task_id
                     )
 
                     created_tasks.append({
                         "id": task.get("id"),
                         "title": task.get("title"),
                         "type": "task",
-                        "assignee": assignee_name
+                        "assignee": assignee_name,
+                        "parent_id": main_task_id
                     })
 
                     logger.info(f"Создана задача: {task_data.get('название')}")
@@ -538,11 +416,9 @@ class WeeekIntegration:
                 "project": {
                     "id": project_id,
                     "title": project.get("title"),
-                    "created": bool(created_project)
                 },
                 "board": {
-                    "id": board_id,
-                    "title": board.get("title")
+                    "id": board_id
                 },
                 "tasks": created_tasks,
                 "failed_tasks": failed_tasks,
@@ -573,51 +449,3 @@ class WeeekIntegration:
                     "failed_tasks": failed_tasks
                 }
             }
-
-    def get_task_url(self, task_id: str, project_id: str, board_id: str) -> str:
-        """
-        Получение URL задачи в Weeek
-
-        Args:
-            task_id: ID задачи
-            project_id: ID проекта
-            board_id: ID доски
-
-        Returns:
-            str: URL задачи
-        """
-        workspace_info = self.get_workspace_info()
-        workspace_id = workspace_info.get("id")
-        return f"https://weeek.net/ru/workspace/{workspace_id}/project/{project_id}/board/{board_id}/task/{task_id}"
-
-    def get_project_url(self, project_id: str) -> str:
-        """
-        Получение URL проекта в Weeek
-
-        Args:
-            project_id: ID проекта
-
-        Returns:
-            str: URL проекта
-        """
-        workspace_info = self.get_workspace_info()
-        workspace_id = workspace_info.get("id")
-        return f"https://weeek.net/ru/workspace/{workspace_id}/project/{project_id}"
-
-    def add_comment_to_task(self, task_id: str, comment: str):
-        """
-        Добавление комментария к задаче (если поддерживается API)
-
-        Args:
-            task_id: ID задачи
-            comment: Текст комментария
-        """
-        try:
-            comment_data = {
-                "text": comment
-            }
-            # Проверяем есть ли такой endpoint в API
-            self._make_request("POST", f"tm/tasks/{task_id}/comments", comment_data)
-            logger.info(f"Добавлен комментарий к задаче {task_id}")
-        except Exception as e:
-            logger.warning(f"Не удалось добавить комментарий (возможно endpoint не поддерживается): {e}")
