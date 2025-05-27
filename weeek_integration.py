@@ -296,22 +296,24 @@ class WeeekIntegration:
         """
         title = f"📋 Сводка совещания от {datetime.now().date()}"
 
-        description = f"""# Результаты технического совещания
+        description = f"""Результаты совещания
 
-## 📝 Резюме
-{analysis.summary}
+👥 Председатель: {analysis.president if analysis.president else "Не определен"}
+👥 Секретарь: {analysis.secretary if analysis.secretary else "Не определен"}
 
-## ✅ Принятые решения ({len(analysis.decisions)})
+📝 Резюме {analysis.summary}
+
+✅ Принятые решения ({len(analysis.decisions)})
 {chr(10).join([f'• {decision}' for decision in analysis.decisions]) if analysis.decisions else 'Решения не принимались'}
 
-## 🔬 Гипотезы для проверки ({len(analysis.hypotheses)})
+🔬 Гипотезы для проверки ({len(analysis.hypotheses)})
 {chr(10).join([f'• {hyp["hypothesis"]} - {hyp.get("status", "требует проверки")}' for hyp in analysis.hypotheses]) if analysis.hypotheses else 'Гипотезы не выдвигались'}
 
-## 👥 Участники
+👥 Участники
 {', '.join(analysis.participants) if analysis.participants else 'Не определены'}
 
-## 🔧 Технические области
-{', '.join(analysis.technical_areas) if analysis.technical_areas else 'Не определены'}
+👥 Отсутствовавшие
+{', '.join(analysis.absent) if analysis.absent else 'Не определены'}
 
 ---
 🤖 Автоматически создано на основе анализа транскрипции
