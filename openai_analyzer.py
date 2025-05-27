@@ -4,9 +4,12 @@ from typing import Dict, List, Any
 from dataclasses import dataclass
 from openai import OpenAI
 from config import OpenAIConfig
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
 
 logger = logging.getLogger(__name__)
-
 
 @dataclass
 class MeetingAnalysis:
@@ -18,7 +21,6 @@ class MeetingAnalysis:
     decisions: List[str]
     participants: List[str]
     technical_areas: List[str]
-
 
 class OpenAIAnalyzer:
     """Класс для анализа транскрипции с помощью OpenAI"""
@@ -205,7 +207,8 @@ class OpenAIAnalyzer:
                                    "Ты специализируешься на выделении задач, гипотез и решений из "
                                    "технических дискуссий инженеров разных специальностей. "
                                    "Для каждой задачи ты ОБЯЗАТЕЛЬНО заполняешь все поля. "
-                                   "Если информация не указана явно, делай разумные предположения на основе контекста."
+                                   "Если информация не указана явно, пиши о неуказанности."
+                                   "Если информация отсутствует, пиши об отсутствии."
                     },
                     {
                         "role": "user",
@@ -282,3 +285,90 @@ class OpenAIAnalyzer:
 
         logger.info(f"Анализ валиден: {len(analysis.tasks)} задач, {len(analysis.decisions)} решений")
         return True
+
+    def save_analysis_to_pdf(self, analysis: MeetingAnalysis, filename: str) -> None:
+        """
+        Сохраняет результаты анализа совещания в PDF-файл.
+
+        Args:
+            analysis (MeetingAnalysis): Объект с анализом совещания.
+            filename (str): Имя файла для сохранения PDF.
+        """
+        doc = SimpleDocTemplate(filename, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Заголовок
+        story.append(Paragraph("Анализ технического совещания", styles['Title']))
+        story.append(Spacer(1, 12))
+
+        # Резюме
+        story.append(Paragraph("Резюме:", styles['Heading2']))
+        story.append(Paragraph(analysis.summary, styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+        # Задачи
+        story.append(Paragraph("Задачи:", styles['Heading2']))
+        if analysis.tasks:
+            data = [["Название", "Описание", "Суть задачи", "Исполнитель", "Срок"]]
+            for task in analysis.tasks:
+                data.append([
+                    task.get("название", ""),
+                    task.get("описание", ""),
+                    task.get("суть_задачи", ""),
+                    task.get("кто_выполняет", ""),
+                    task.get("срок", "")
+                ])
+            table = Table(data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            story.append(table)
+        else:
+            story.append(Paragraph("Задачи не найдены.", styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+        # Гипотезы
+        story.append(Paragraph("Гипотезы:", styles['Heading2']))
+        if analysis.hypotheses:
+            for hypothesis in analysis.hypotheses:
+                story.append(Paragraph(f"- {hypothesis.get('hypothesis', '')} ({hypothesis.get('status', '')})", styles['BodyText']))
+        else:
+            story.append(Paragraph("Гипотезы не найдены.", styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+        # Решения
+        story.append(Paragraph("Решения:", styles['Heading2']))
+        if analysis.decisions:
+            for decision in analysis.decisions:
+                story.append(Paragraph(f"- {decision}", styles['BodyText']))
+        else:
+            story.append(Paragraph("Решения не найдены.", styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+        # Участники
+        story.append(Paragraph("Участники:", styles['Heading2']))
+        if analysis.participants:
+            for participant in analysis.participants:
+                story.append(Paragraph(f"- {participant}", styles['BodyText']))
+        else:
+            story.append(Paragraph("Участники не указаны.", styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+        # Технические области
+        story.append(Paragraph("Технические области:", styles['Heading2']))
+        if analysis.technical_areas:
+            for area in analysis.technical_areas:
+                story.append(Paragraph(f"- {area}", styles['BodyText']))
+        else:
+            story.append(Paragraph("Технические области не указаны.", styles['BodyText']))
+
+        # Сохранение документа
+        doc.build(story)
+        logger.info(f"PDF сохранен в файл: {filename}")
