@@ -1,7 +1,9 @@
 import os
 from dataclasses import dataclass
 from typing import Optional
+from dotenv import load_dotenv
 
+load_dotenv()
 
 @dataclass
 class VoskConfig:
@@ -14,7 +16,7 @@ class VoskConfig:
 class OpenAIConfig:
     """Конфигурация для OpenAI"""
     api_key: str
-    model: str = "gpt-4"
+    model: str = "gpt-4o-mini"
     temperature: float = 0.3
 
 
@@ -42,7 +44,7 @@ class MeetingSecretaryConfig:
         )
 
         openai_config = OpenAIConfig(
-            api_key=os.getenv("OPENAI_API_KEY", "")
+            api_key=os.getenv("OPENAI_API_KEY", "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")
         )
 
         weeek_config = None
