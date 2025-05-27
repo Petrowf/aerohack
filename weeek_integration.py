@@ -1,4 +1,6 @@
 import logging
+import os
+
 import requests
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
@@ -35,7 +37,7 @@ class WeeekIntegration:
 
     def _check_connection(self):
         """Проверка подключения к API"""
-        url = f"{self.base_url}/user"
+        url = f"{self.base_url}/user/me"
         response = requests.get(url, headers=self.headers)
 
         if response.status_code != 200:
@@ -305,7 +307,8 @@ class WeeekIntegration:
                     description: str,
                     board_id: str,
                     assignees: List[str] = None,
-                    due_date: str = None) -> Dict[str, Any]:
+                    due_date: str = None,
+                    parent_id: int = None) -> Dict[str, Any]:
         """
         Создание задачи в Weeek
 
@@ -322,7 +325,8 @@ class WeeekIntegration:
         task_data = {
             "title": title,
             "description": description,
-            "boardId": board_id
+            "boardId": board_id,
+            "parentId": parent_id
         }
 
         # Добавление исполнителей
@@ -342,43 +346,7 @@ class WeeekIntegration:
             logger.error(f"Ошибка создания задачи '{title}': {e}")
             raise
 
-    def create_meeting_project(self, analysis: MeetingAnalysis) -> Dict[str, Any]:
-        """
-        Создание проекта для технического совещания
 
-        Args:
-            analysis: Анализ совещания
-
-        Returns:
-            Dict: Данные созданного проекта
-        """
-        project_title = f"Техническое совещание - {datetime.now().strftime('%d.%m.%Y %H:%M')}"
-
-        description = f"""📋 Автоматически созданный проект на основе анализа технического совещания
-
-📝 Резюме:
-{analysis.summary}
-
-👥 Участники ({len(analysis.participants)}):
-{', '.join(analysis.participants) if analysis.participants else 'Не определены'}
-
-🔧 Технические области:
-{', '.join(analysis.technical_areas) if analysis.technical_areas else 'Не определены'}
-
-📊 Статистика:
-• Задач выявлено: {len(analysis.tasks)}
-• Решений принято: {len(analysis.decisions)}
-• Гипотез для проверки: {len(analysis.hypotheses)}
-
-🤖 Создано автоматически: {datetime.now().strftime('%d.%m.%Y в %H:%M')}"""
-
-        try:
-            project = self.create_project(project_title, description)
-            logger.info(f"Создан проект: {project.get('title')} (ID: {project.get('id')})")
-            return project
-        except Exception as e:
-            logger.error(f"Ошибка создания проекта совещания: {e}")
-            raise
 
     def create_meeting_board(self, project_id: str, analysis: MeetingAnalysis) -> Dict[str, Any]:
         """
@@ -413,7 +381,7 @@ class WeeekIntegration:
         Returns:
             Dict: Данные созданной задачи
         """
-        title = "📋 Сводка технического совещания"
+        title = f"📋 Сводка совещания от {datetime.now().date()}"
 
         description = f"""# Результаты технического совещания
 
@@ -446,7 +414,7 @@ class WeeekIntegration:
             logger.error(f"Ошибка создания сводной задачи: {e}")
             raise
 
-    def create_tasks_from_analysis(self, analysis: MeetingAnalysis, project_id: str = None) -> Dict[str, Any]:
+    def create_tasks_from_analysis(self, analysis: MeetingAnalysis) -> Dict[str, Any]:
         """
         Создание задач в Weeek на основе анализа
 
@@ -459,20 +427,14 @@ class WeeekIntegration:
         """
         logger.info("Создание задач в Weeek...")
 
-        # Создание проекта если не указан
-        created_project = None
-        if not project_id:
-            created_project = self.create_meeting_project(analysis)
-            project_id = created_project.get("id")
+        project_id = self.config.project_id
 
         # Проверка проекта
         project = self.get_project_by_id(project_id)
         if not project:
             raise ValueError(f"Проект {project_id} не найден")
 
-        # Создание доски для задач
-        board = self.create_meeting_board(project_id, analysis)
-        board_id = board.get("id")
+        board_id = os.getenv("WEEEK_BOARD_ID")
 
         created_tasks = []
         failed_tasks = []
@@ -480,8 +442,9 @@ class WeeekIntegration:
         try:
             # Создание сводной задачи
             summary_task = self.create_summary_task(analysis, board_id)
+            main_task_id = summary_task.get("id")
             created_tasks.append({
-                "id": summary_task.get("id"),
+                "id": main_task_id,
                 "title": summary_task.get("title"),
                 "type": "summary"
             })
@@ -512,14 +475,16 @@ class WeeekIntegration:
 🤖 Автоматически извлечено из транскрипции совещания""",
                         board_id=board_id,
                         assignees=assignees if assignees else None,
-                        due_date=task_data.get('срок')
+                        due_date=task_data.get('срок'),
+                        parent_id=main_task_id
                     )
 
                     created_tasks.append({
                         "id": task.get("id"),
                         "title": task.get("title"),
                         "type": "task",
-                        "assignee": assignee_name
+                        "assignee": assignee_name,
+                        "parent_id": main_task_id
                     })
 
                     logger.info(f"Создана задача: {task_data.get('название')}")
@@ -538,11 +503,9 @@ class WeeekIntegration:
                 "project": {
                     "id": project_id,
                     "title": project.get("title"),
-                    "created": bool(created_project)
                 },
                 "board": {
-                    "id": board_id,
-                    "title": board.get("title")
+                    "id": board_id
                 },
                 "tasks": created_tasks,
                 "failed_tasks": failed_tasks,
