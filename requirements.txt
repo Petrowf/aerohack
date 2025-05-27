@@ -40,4 +40,6 @@ urllib3==2.4.0
 vosk==0.3.45
 websockets==15.0.1
 yarl==1.20.0
-pydub
+pydub~=0.25.1
+python-dotenv~=1.1.0
+python-docx~=1.1.2
