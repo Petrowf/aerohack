@@ -213,7 +213,7 @@ class OpenAIAnalyzer:
             analysis_prompt = self.create_analysis_prompt(transcript)
 
             response = self.client.chat.completions.create(
-                model=self.config.model,
+                model=self.config.analyze_model,
                 messages=[
                     {
                         "role": "system",

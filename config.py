@@ -16,7 +16,8 @@ class VoskConfig:
 class OpenAIConfig:
     """Конфигурация для OpenAI"""
     api_key: str
-    model: str = "gpt-4.1-mini"
+    analyze_model: str = "gpt-4.1-mini"
+    transcript_model: str = "whisper-1"
     temperature: float = 0.3
 
 

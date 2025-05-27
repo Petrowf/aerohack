@@ -298,21 +298,23 @@ class WeeekIntegration:
 
         description = f"""Результаты совещания
 
-👥 Председатель: {analysis.president if analysis.president else "Не определен"}
-👥 Секретарь: {analysis.secretary if analysis.secretary else "Не определен"}
+👥 Председатель: {analysis.president if analysis.president else "Не определен"}\n
 
-📝 Резюме {analysis.summary}
+👥 Секретарь: {analysis.secretary if analysis.secretary else "Не определен"}\n\n
+
+📝 Резюме {analysis.summary}\n\n
 
 ✅ Принятые решения ({len(analysis.decisions)})
-{chr(10).join([f'• {decision}' for decision in analysis.decisions]) if analysis.decisions else 'Решения не принимались'}
+{chr(10).join([f'• {decision}' for decision in analysis.decisions]) if analysis.decisions else 'Решения не принимались'}\n\n
 
 🔬 Гипотезы для проверки ({len(analysis.hypotheses)})
-{chr(10).join([f'• {hyp["hypothesis"]} - {hyp.get("status", "требует проверки")}' for hyp in analysis.hypotheses]) if analysis.hypotheses else 'Гипотезы не выдвигались'}
+{chr(10).join([f'• {hyp["hypothesis"]} - {hyp.get("status", "требует проверки")}' for hyp in analysis.hypotheses]) if analysis.hypotheses else 'Гипотезы не выдвигались'}\n\n
 
 👥 Участники
-{', '.join(analysis.participants) if analysis.participants else 'Не определены'}
+{', '.join(analysis.participants) if analysis.participants else 'Не определены'}\n\n
 
 🤖 Автоматически создано на основе анализа транскрипции
+
 📅 Дата создания: {datetime.now().strftime('%d.%m.%Y в %H:%M')}"""
 
         try:

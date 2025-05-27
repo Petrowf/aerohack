@@ -1,28 +1,12 @@
 import logging
 from typing import Optional
+from config import OpenAIConfig
 
 import dotenv
 # Импортируем OpenAI клиент
 from openai import OpenAI, APIStatusError, AuthenticationError, OpenAIError
 dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
-
-# Если вы хотите избежать создания config.py, можете просто определить класс OpenAIConfig здесь:
-import os
-from dataclasses import dataclass
-
-
-@dataclass
-class OpenAIConfig:
-    """Конфигурация для OpenAI API"""
-    api_key: str = os.getenv("OPENAI_API_KEY")  # Предполагаем, что ключ берется из переменных окружения
-    model_name: str = "gpt-4o-mini-transcribe"  # Модель по умолчанию для транскрипции
-
-    def __post_init__(self):
-        if not self.api_key:
-            raise ValueError(
-                "OPENAI_API_KEY не установлен. Пожалуйста, установите переменную окружения или передайте ключ.")
-
 
 class OpenAITranscriber:
     """Класс для транскрипции аудио с помощью OpenAI Whisper API"""
@@ -35,7 +19,7 @@ class OpenAITranscriber:
             config: Конфигурация OpenAI
         """
         self.config = config
-        logger.info(f"Инициализация OpenAI транскрибера с моделью: {config.model_name}")
+        logger.info(f"Инициализация OpenAI транскрибера с моделью: {config.transcript_model}")
 
         try:
             self.client = OpenAI(api_key=config.api_key)
@@ -61,7 +45,7 @@ class OpenAITranscriber:
         """
         logger.info(f"Начало транскрипции аудиофайла: {audio_path} с OpenAI Whisper")
 
-        chosen_model = model_name if model_name else self.config.model_name
+        chosen_model = model_name if model_name else self.config.transcript_model
 
         try:
             with open(audio_path, "rb") as audio_file:
