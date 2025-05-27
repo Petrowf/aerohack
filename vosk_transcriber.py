@@ -58,7 +58,7 @@ class VoskTranscriber:
 
     def transcribe_audio(self, audio: AudioSegment) -> str:
         """
-        Полная транскрипция аудио
+        Полная транскрипция аудио по чанкам
 
         Args:
             audio: AudioSegment для транскрипции
@@ -69,13 +69,20 @@ class VoskTranscriber:
         logger.info("Начало транскрипции аудио...")
 
         try:
-            # Создаем новый распознаватель для каждой транскрипции
+            # Создаем распознаватель один раз
             recognizer = vosk.KaldiRecognizer(self.model, 16000)
             recognizer.SetWords(True)
 
-            # Передаем все аудио сразу
+            # Получаем сырые данные аудио
             raw_data = audio.raw_data
-            recognizer.AcceptWaveform(raw_data)
+
+            # Размер чанка: 5 секунд для 16kHz 16-битного аудио (5 * 16000 сэмплов * 2 байта)
+            chunk_size = 5 * 16000 * 2  # 160,000 байт
+
+            # Обрабатываем аудио по чанкам
+            for i in range(0, len(raw_data), chunk_size):
+                chunk = raw_data[i:i + chunk_size]
+                recognizer.AcceptWaveform(chunk)
 
             # Получаем финальный результат
             final_result = json.loads(recognizer.FinalResult())
