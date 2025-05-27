@@ -38,7 +38,7 @@ class MeetingSecretaryConfig:
     def from_env(cls):
         """Создание конфигурации из переменных окружения"""
         vosk_config = VoskConfig(
-            model_path=os.getenv("VOSK_MODEL_PATH", "path/to/vosk-model-ru-0.42")
+            model_path=os.getenv("VOSK_MODEL_PATH", "vosk-model-small-ru-0.22")
         )
 
         openai_config = OpenAIConfig(
