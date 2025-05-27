@@ -19,12 +19,12 @@ class OpenAIConfig:
 
 
 @dataclass
-class JiraConfig:
-    """Конфигурация для Jira"""
-    url: str
-    email: str
+class WeeekConfig:
+    """Конфигурация для Weeek"""
     api_token: str
-    project_key: str = "MEET"
+    workspace_id: str
+    project_id: Optional[str] = None
+    base_url: str = "https://api.weeek.net/public/v1"
 
 
 @dataclass
@@ -32,7 +32,7 @@ class MeetingSecretaryConfig:
     """Общая конфигурация"""
     vosk: VoskConfig
     openai: OpenAIConfig
-    jira: Optional[JiraConfig] = None
+    weeek: Optional[WeeekConfig] = None
 
     @classmethod
     def from_env(cls):
@@ -45,17 +45,16 @@ class MeetingSecretaryConfig:
             api_key=os.getenv("OPENAI_API_KEY", "")
         )
 
-        jira_config = None
-        if all([os.getenv("JIRA_URL"), os.getenv("JIRA_EMAIL"), os.getenv("JIRA_API_TOKEN")]):
-            jira_config = JiraConfig(
-                url=os.getenv("JIRA_URL"),
-                email=os.getenv("JIRA_EMAIL"),
-                api_token=os.getenv("JIRA_API_TOKEN"),
-                project_key=os.getenv("JIRA_PROJECT_KEY", "MEET")
+        weeek_config = None
+        if all([os.getenv("WEEEK_API_TOKEN"), os.getenv("WEEEK_WORKSPACE_ID")]):
+            weeek_config = WeeekConfig(
+                api_token=os.getenv("WEEEK_API_TOKEN"),
+                workspace_id=os.getenv("WEEEK_WORKSPACE_ID"),
+                project_id=os.getenv("WEEEK_PROJECT_ID")
             )
 
         return cls(
             vosk=vosk_config,
             openai=openai_config,
-            jira=jira_config
+            weeek=weeek_config
         )
