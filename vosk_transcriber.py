@@ -24,8 +24,6 @@ class VoskTranscriber:
 
         try:
             self.model = vosk.Model(config.model_path)
-            self.recognizer = vosk.KaldiRecognizer(self.model, 16000)
-            self.recognizer.SetWords(True)
             logger.info("Модель Vosk успешно загружена")
         except Exception as e:
             logger.error(f"Ошибка загрузки модели Vosk: {e}")
@@ -47,55 +45,16 @@ class VoskTranscriber:
             # Загрузка аудио с поддержкой различных форматов
             audio = AudioSegment.from_file(audio_path)
 
-            # Конвертация в нужный формат для Vosk (16kHz, mono, WAV)
-            audio = audio.set_frame_rate(16000).set_channels(1)
+            # Конвертация в нужный формат для Vosk (16kHz, mono, 16-bit PCM)
+            audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
 
-            logger.info(f"Аудио обработано: {len(audio) / 1000:.2f} секунд, "
-                        f"частота: {audio.frame_rate}Hz, каналы: {audio.channels}")
+            logger.info(f"Аудио обработано: {len(audio) / 1000:.2f} секунд")
 
             return audio
 
         except Exception as e:
             logger.error(f"Ошибка обработки аудиофайла {audio_path}: {e}")
             raise
-
-    def transcribe_chunk(self, chunk_bytes: bytes) -> str:
-        """
-        Транскрипция одного чанка аудио
-
-        Args:
-            chunk_bytes: Байты аудио чанка
-
-        Returns:
-            str: Текст транскрипции чанка
-        """
-        try:
-            if self.recognizer.AcceptWaveform(chunk_bytes):
-                result = json.loads(self.recognizer.Result())
-                return result.get('text', '')
-            return ''
-        except Exception as e:
-            logger.error(f"Ошибка транскрипции чанка: {e}")
-            return ''
-
-    def get_final_result(self) -> str:
-        """
-        Получение финального результата транскрипции
-
-        Returns:
-            str: Финальный текст
-        """
-        try:
-            final_result = json.loads(self.recognizer.FinalResult())
-            return final_result.get('text', '')
-        except Exception as e:
-            logger.error(f"Ошибка получения финального результата: {e}")
-            return ''
-
-    def reset_recognizer(self):
-        """Сброс распознавателя для новой транскрипции"""
-        self.recognizer = vosk.KaldiRecognizer(self.model, 16000)
-        self.recognizer.SetWords(True)
 
     def transcribe_audio(self, audio: AudioSegment) -> str:
         """
@@ -109,36 +68,22 @@ class VoskTranscriber:
         """
         logger.info("Начало транскрипции аудио...")
 
-        transcript_parts = []
-        total_chunks = len(audio) // self.config.chunk_size + (1 if len(audio) % self.config.chunk_size else 0)
-
         try:
-            # Обработка аудио по чанкам
-            for i in range(0, len(audio), self.config.chunk_size):
-                chunk_num = i // self.config.chunk_size + 1
-                logger.info(f"Обработка чанка {chunk_num}/{total_chunks}")
+            # Создаем новый распознаватель для каждой транскрипции
+            recognizer = vosk.KaldiRecognizer(self.model, 16000)
+            recognizer.SetWords(True)
 
-                # Извлечение чанка
-                chunk = audio[i:i + self.config.chunk_size]
-                chunk_bytes = chunk.raw_data
+            # Передаем все аудио сразу
+            raw_data = audio.raw_data
+            recognizer.AcceptWaveform(raw_data)
 
-                # Транскрипция чанка
-                chunk_text = self.transcribe_chunk(chunk_bytes)
-                if chunk_text:
-                    transcript_parts.append(chunk_text)
+            # Получаем финальный результат
+            final_result = json.loads(recognizer.FinalResult())
+            transcript = final_result.get('text', '')
 
-            # Получение финального результата
-            final_text = self.get_final_result()
-            if final_text:
-                transcript_parts.append(final_text)
+            logger.info(f"Транскрипция завершена. Длина текста: {len(transcript)} символов")
 
-            # Сброс распознавателя
-            self.reset_recognizer()
-
-            full_transcript = ' '.join(transcript_parts)
-            logger.info(f"Транскрипция завершена. Длина текста: {len(full_transcript)} символов")
-
-            return full_transcript
+            return transcript
 
         except Exception as e:
             logger.error(f"Ошибка при транскрипции: {e}")
