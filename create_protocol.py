@@ -6,7 +6,7 @@ from copy import deepcopy
 from openai_analyzer import MeetingAnalysis
 
 
-def replace_placeholders(output_path: str, meeting: MeetingAnalysis, docx_path: str = "protokol_layout.docx") -> None:
+def replace_placeholders(output_path: str, meeting: MeetingAnalysis, docx_path: str = "protokol_layout_new.docx") -> None:
     doc = Document(docx_path)
 
     # Регулярное выражение для плейсхолдеров: {ключ} или {модификатор:ключ}
@@ -122,11 +122,11 @@ def replace_placeholders(output_path: str, meeting: MeetingAnalysis, docx_path: 
                                 if col_idx == 0:
                                     new_cell.text = str(i)  # Номер
                                 elif col_idx == 1:
-                                    new_cell.text = item.get("суть_задачи", item.get("гипотеза", ""))
+                                    new_cell.text = item.get("суть_задачи", item.get("hypothesis", ""))
                                 elif col_idx == 2:
-                                    new_cell.text = item.get("кто_выполняет", item.get("ответственный", ""))
+                                    new_cell.text = item.get("кто_выполняет", item.get("status", ""))
                                 elif col_idx == 3:
-                                    new_cell.text = item.get("срок", item.get("дата_проверки", ""))
+                                    new_cell.text = item.get("срок", item.get("related_area", ""))
                         continue
 
                     # Обычная замена плейсхолдеров в таблице

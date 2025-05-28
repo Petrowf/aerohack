@@ -8,7 +8,7 @@ from create_protocol import replace_placeholders
 from config import MeetingSecretaryConfig, VoskConfig, OpenAIConfig, WeeekConfig
 from vosk_transcriber import VoskTranscriber
 from openai_analyzer import OpenAIAnalyzer, MeetingAnalysis
-from openai_transcriber import OpenAITranscriber
+from openai_transcriber1 import OpenAITranscriber
 from weeek_integration import WeeekIntegration
 
 # Настройка логирования

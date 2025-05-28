@@ -11,7 +11,7 @@ import config
 # import weeek_integration
 from dotenv import load_dotenv
 import os
-# import openai_transcriber
+# import openai_transcriber3
 import requests
 from aiogram.fsm.state import State
 from aiogram.utils.keyboard import InlineKeyboardBuilder
